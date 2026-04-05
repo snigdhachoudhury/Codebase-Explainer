@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Codebase Graph — Member 6</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+<style>
+  :root {
+    --bg: #F0EEE8;
+    --card: #FFFFFF;
+    --border: rgba(26,25,22,0.12);
+    --text: #1A1916;
+    --text2: #5A5955;
+    --text3: #9A9893;
+    --header: #042C53;
+    --header-title: #E6F1FB;
+    --header-sub: #85B7EB;
+    --accent: #378ADD;
+
+    --entry-color: #378ADD;
+    --core-color:  #1D9E75;
+    --data-color:  #BA7517;
+    --config-color:#888780;
+
+    --entry-bg: #E6F1FB;
+    --core-bg:  #E1F5EE;
+    --data-bg:  #FAEEDA;
+    --config-bg:#F1EFE8;
+
+    --entry-txt: #042C53;
+    --core-txt:  #04342C;
+    --data-txt:  #412402;
+    --config-txt:#2C2C2A;
+  }
+  [data-theme="dark"] {
+    --bg: #111110;
+    --card: #1C1C1A;
+    --border: rgba(240,238,232,0.10);
+    --text: #F0EEE8;
+    --text2: #A8A6A0;
+    --text3: #6A6864;
+    --header: #0C2A42;
+    --header-title: #B5D4F4;
+    --header-sub: #85B7EB;
+
+    --entry-color: #85B7EB;
+    --core-color:  #5DCAA5;
+    --data-color:  #EF9F27;
+    --config-color:#888780;
+
+    --entry-bg: #0C2A42;
+    --core-bg:  #042E22;
+    --data-bg:  #2E1E06;
+    --config-bg:#252523;
+
+    --entry-txt: #B5D4F4;
+    --core-txt:  #9FE1CB;
+    --data-txt:  #FAC775;
+    --config-txt:#D3D1C7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--header);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo svg { width: 16px; height: 16px; }
+  .header-text { flex: 1; }
+  .header-title { color: var(--header-title); font-size: 14px; font-weight: 600; }
+  .header-sub   { color: var(--header-sub);   font-size: 10px; margin-top: 1px; }
+  .theme-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.12);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: background 0.15s;
+  }
+  .theme-btn:hover { background: rgba(255,255,255,0.22); }
+
+  /* TOOLBAR */
+  .toolbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .toolbar-label { font-size: 11px; color: var(--text3); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .filter-btn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 11px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .filter-btn .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .filter-btn.active-entry { background: var(--entry-bg); color: var(--entry-txt); border-color: var(--entry-color); }
+  .filter-btn.active-core  { background: var(--core-bg);  color: var(--core-txt);  border-color: var(--core-color); }
+  .filter-btn.active-data  { background: var(--data-bg);  color: var(--data-txt);  border-color: var(--data-color); }
+  .filter-btn.active-config{ background: var(--config-bg);color: var(--config-txt);border-color: var(--config-color);}
+  .sep { width: 1px; height: 20px; background: var(--border); }
+  .ctrl-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* MAIN AREA */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* GRAPH */
+  #cy {
+    flex: 1;
+    background: var(--bg);
+  }
+
+  /* SIDE PANEL */
+  .side-panel {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  /* Legend */
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px; font-size: 12px; color: var(--text2);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Node info */
+  .node-info { flex: 1; overflow-y: auto; padding: 14px 16px; }
+  .no-select {
+    font-size: 12px; color: var(--text3);
+    text-align: center; margin-top: 30px; line-height: 1.6;
+  }
+  .info-name {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    word-break: break-all; margin-bottom: 8px;
+  }
+  .info-badge {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .badge-entry  { background: var(--entry-bg); color: var(--entry-txt); }
+  .badge-core   { background: var(--core-bg);  color: var(--core-txt); }
+  .badge-data   { background: var(--data-bg);  color: var(--data-txt); }
+  .badge-config { background: var(--config-bg);color: var(--config-txt); }
+
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--text3); }
+  .info-val { color: var(--text); font-weight: 500; font-family: 'IBM Plex Mono', monospace; }
+
+  .score-bar-wrap { margin-top: 10px; }
+  .score-bar-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+  .score-bar-bg { background: var(--bg); border-radius: 4px; height: 6px; overflow: hidden; }
+  .score-bar-fill { height: 6px; border-radius: 4px; background: var(--accent); transition: width 0.3s; }
+
+  .connections-list { margin-top: 10px; }
+  .conn-title { font-size: 10px; color: var(--text3); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .conn-item {
+    font-size: 11px; color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 3px 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Stats bar at bottom */
+  .stats-bar {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex; gap: 16px;
+    font-size: 10px; color: var(--text3);
+    flex-shrink: 0;
+  }
+  .stat { display: flex; gap: 4px; align-items: center; }
+  .stat b { color: var(--text2); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 16 16" fill="none">
+      <circle cx="4" cy="4" r="2" fill="white" opacity="0.9"/>
+      <circle cx="12" cy="4" r="2" fill="white" opacity="0.9"/>
+      <circle cx="8" cy="12" r="2" fill="white" opacity="0.9"/>
+      <line x1="4" y1="4" x2="12" y2="4" stroke="white" stroke-width="1" opacity="0.6"/>
+      <line x1="4" y1="4" x2="8" y2="12" stroke="white" stroke-width="1" opacity="0.6"/>
+      <line x1="12" y1="4" x2="8" y2="12" stroke="white" stroke-width="1" opacity="0.6"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <div class="header-title">Codebase Graph</div>
+    <div class="header-sub">Interactive architecture map — Member 6</div>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <span class="toolbar-label">Filter</span>
+  <button class="filter-btn active-entry" id="btn-entry" onclick="toggleFilter('entry')">
+    <span class="dot" style="background:var(--entry-color)"></span> Entry
+  </button>
+  <button class="filter-btn active-core" id="btn-core" onclick="toggleFilter('core')">
+    <span class="dot" style="background:var(--core-color)"></span> Core
+  </button>
+  <button class="filter-btn active-data" id="btn-data" onclick="toggleFilter('data')">
+    <span class="dot" style="background:var(--data-color)"></span> Data
+  </button>
+  <button class="filter-btn active-config" id="btn-config" onclick="toggleFilter('config')">
+    <span class="dot" style="background:var(--config-color)"></span> Config
+  </button>
+  <div class="sep"></div>
+  <span class="toolbar-label">Layout</span>
+  <button class="ctrl-btn" onclick="runLayout('cose')">Force</button>
+  <button class="ctrl-btn" onclick="runLayout('breadthfirst')">Tree</button>
+  <button class="ctrl-btn" onclick="runLayout('circle')">Circle</button>
+  <div class="sep"></div>
+  <button class="ctrl-btn" onclick="cy.fit()">Fit</button>
+  <button class="ctrl-btn" onclick="cy.zoom(cy.zoom()*1.2)">＋</button>
+  <button class="ctrl-btn" onclick="cy.zoom(cy.zoom()*0.8)">－</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div id="cy"></div>
+  <div class="side-panel">
+    <div class="panel-section">
+      <div class="panel-title">Legend</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--entry-color)"></div> Entry point</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--core-color)"></div> Core logic</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--data-color)"></div> Data layer</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--config-color)"></div> Config / utils</div>
+      <div class="legend-item" style="margin-top:8px">
+        <div class="legend-dot" style="background:var(--text3);opacity:0.5;width:16px;height:6px;border-radius:3px"></div>
+        Bigger = more important
+      </div>
+    </div>
+    <div class="node-info" id="node-info">
+      <div class="no-select">Click any node to see file details</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="stats-bar">
+  <div class="stat">Nodes: <b id="stat-nodes">–</b></div>
+  <div class="stat">Edges: <b id="stat-edges">–</b></div>
+  <div class="stat">Entry: <b id="stat-entry">–</b></div>
+  <div class="stat">Core: <b id="stat-core">–</b></div>
+  <div class="stat">Data: <b id="stat-data">–</b></div>
+  <div class="stat">Config: <b id="stat-config">–</b></div>
+</div>
+
+<script src="graph.js"></script>
+</body>
+</html>
